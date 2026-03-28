@@ -1,18 +1,27 @@
 """
-service.py – Lógica de negocio (CRUD) en memoria para contactos.
+service.py – Lógica de negocio (CRUD) con persistencia en JSON.
 
 Estructuras de datos:
-    contactos        : list[dict]  – lista principal de registros
-    ids_registrados  : set         – IDs únicos (evita duplicados)
-    emails_registrados: set        – emails únicos (evita duplicados)
+    contactos         : list[dict]  – lista principal de registros
+    ids_registrados   : set         – IDs únicos (evita duplicados)
+    emails_registrados: set         – emails únicos (evita duplicados)
 """
 
 from validate import campo_requerido, pedir_email, pedir_telefono, id_unico
+from file import load_data, save_data
 
 # ── Estado en memoria ─────────────────────────────────────────────────────────
 contactos: list[dict] = []
 ids_registrados: set = set()
 emails_registrados: set = set()
+
+
+def inicializar():
+    """Carga los datos del archivo JSON al arrancar el programa."""
+    global contactos, ids_registrados, emails_registrados
+    contactos = load_data()
+    ids_registrados    = {c["id"]    for c in contactos}
+    emails_registrados = {c["email"] for c in contactos}
 
 
 def _siguiente_id() -> int:
@@ -24,10 +33,6 @@ def _siguiente_id() -> int:
 def crear():
     print("\n── Nuevo contacto ──")
     nuevo_id = _siguiente_id()
-
-    if not id_unico(nuevo_id, ids_registrados):
-        print("Error interno: ID duplicado.")
-        return
 
     nombre      = campo_requerido("Nombre: ")
     email       = pedir_email(emails_registrados)
@@ -45,8 +50,9 @@ def crear():
     contactos.append(contacto)
     ids_registrados.add(nuevo_id)
     emails_registrados.add(email)
+    save_data(contactos)
 
-    print(f"  ✔ Contacto #{nuevo_id} creado correctamente.")
+    print(f"  ✔ Contacto #{nuevo_id} guardado correctamente.")
 
 
 # ── Listar ────────────────────────────────────────────────────────────────────
@@ -77,7 +83,6 @@ def actualizar():
             print("  (Deja en blanco para conservar el valor actual)")
             nombre = input(f"Nombre [{c['nombre']}]: ").strip() or c["nombre"]
 
-            # Email: solo cambia si ingresa uno distinto
             nuevo_email = input(f"Email [{c['email']}]: ").strip().lower()
             if nuevo_email and nuevo_email != c["email"]:
                 from validate import es_email_valido
@@ -98,7 +103,8 @@ def actualizar():
 
             c.update({"nombre": nombre, "email": nuevo_email,
                       "telefono": telefono, "descripcion": descripcion})
-            print("  ✔ Contacto actualizado.")
+            save_data(contactos)
+            print("  ✔ Contacto actualizado y guardado.")
             return
 
     print(f"  ⚠ No se encontró ningún contacto con ID {cid}.")
@@ -119,7 +125,8 @@ def eliminar():
             contactos.remove(c)
             ids_registrados.discard(cid)
             emails_registrados.discard(c["email"])
-            print(f"  ✔ Contacto #{cid} eliminado.")
+            save_data(contactos)
+            print(f"  ✔ Contacto #{cid} eliminado y guardado.")
             return
 
     print(f"  ⚠ No se encontró ningún contacto con ID {cid}.")
