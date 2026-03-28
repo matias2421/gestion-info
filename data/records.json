@@ -1,1 +1,33 @@
-[]
+[
+  {
+    "id": 2,
+    "nombre": "Carlos López",
+    "email": "carlos@email.com"
+  },
+  {
+    "id": 3,
+    "nombre": "Laura Fernández",
+    "email": "laura@email.com"
+  },
+  {
+    "id": 4,
+    "nombre": "migue",
+    "email": "miguel@email.com",
+    "descripcion": "& C:/Users/Matias/AppData/Local/Microsoft/WindowsApps/python3.13.exe c:/Users/Matias/Documents/gestion-info/src/main.py"
+  },
+  {
+    "id": 5,
+    "nombre": "Sofía Martínez",
+    "email": "sofia@email.com"
+  },
+  {
+    "id": 6,
+    "nombre": "meme",
+    "descripcion": "ee"
+  },
+  {
+    "id": 7,
+    "nombre": "1",
+    "descripcion": "2"
+  }
+]

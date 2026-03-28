@@ -1,81 +1,125 @@
 """
-service.py – Lógica de negocio (CRUD).
-Coordina validaciones, persistencia y respuestas al menú.
+service.py – Lógica de negocio (CRUD) en memoria para contactos.
+
+Estructuras de datos:
+    contactos        : list[dict]  – lista principal de registros
+    ids_registrados  : set         – IDs únicos (evita duplicados)
+    emails_registrados: set        – emails únicos (evita duplicados)
 """
 
-from file import cargar_registros, guardar_registros
-from validate import campo_requerido, id_unico
+from validate import campo_requerido, pedir_email, pedir_telefono, id_unico
+
+# ── Estado en memoria ─────────────────────────────────────────────────────────
+contactos: list[dict] = []
+ids_registrados: set = set()
+emails_registrados: set = set()
 
 
-# ── Crear ────────────────────────────────────────────────────────────────────
+def _siguiente_id() -> int:
+    return max(ids_registrados, default=0) + 1
+
+
+# ── Crear ─────────────────────────────────────────────────────────────────────
 
 def crear():
-    registros = cargar_registros()
+    print("\n── Nuevo contacto ──")
+    nuevo_id = _siguiente_id()
 
-    nombre = campo_requerido("Nombre: ")
-    descripcion = input("Descripción: ").strip()
-
-    nuevo_id = (max((r["id"] for r in registros), default=0)) + 1
-    if not id_unico(nuevo_id, registros):
-        print("Error: ID duplicado.")
+    if not id_unico(nuevo_id, ids_registrados):
+        print("Error interno: ID duplicado.")
         return
 
-    registro = {"id": nuevo_id, "nombre": nombre, "descripcion": descripcion}
-    registros.append(registro)
-    guardar_registros(registros)
-    print(f"Registro #{nuevo_id} creado correctamente.")
+    nombre      = campo_requerido("Nombre: ")
+    email       = pedir_email(emails_registrados)
+    telefono    = pedir_telefono()
+    descripcion = input("Descripción (opcional): ").strip()
+
+    contacto = {
+        "id":          nuevo_id,
+        "nombre":      nombre,
+        "email":       email,
+        "telefono":    telefono,
+        "descripcion": descripcion,
+    }
+
+    contactos.append(contacto)
+    ids_registrados.add(nuevo_id)
+    emails_registrados.add(email)
+
+    print(f"  ✔ Contacto #{nuevo_id} creado correctamente.")
 
 
-# ── Listar ───────────────────────────────────────────────────────────────────
+# ── Listar ────────────────────────────────────────────────────────────────────
 
 def listar():
-    registros = cargar_registros()
-    if not registros:
-        print("No hay registros todavía.")
+    if not contactos:
+        print("\n  (No hay contactos registrados)")
         return
-    print(f"\n{'ID':<6} {'Nombre':<25} {'Descripción'}")
-    print("-" * 60)
-    for r in registros:
-        print(f"{r['id']:<6} {r['nombre']:<25} {r.get('descripcion', '')}")
+
+    print(f"\n{'ID':<5} {'Nombre':<20} {'Email':<25} {'Teléfono':<15} {'Descripción'}")
+    print("─" * 80)
+    for c in contactos:
+        print(f"{c['id']:<5} {c['nombre']:<20} {c['email']:<25} {c['telefono']:<15} {c.get('descripcion','')}")
 
 
-# ── Actualizar ───────────────────────────────────────────────────────────────
+# ── Actualizar ────────────────────────────────────────────────────────────────
 
 def actualizar():
-    registros = cargar_registros()
+    listar()
     try:
-        registro_id = int(input("ID del registro a actualizar: "))
+        cid = int(input("\nID del contacto a actualizar: "))
     except ValueError:
-        print("ID inválido.")
+        print("  ⚠ ID inválido.")
         return
 
-    for r in registros:
-        if r["id"] == registro_id:
-            nuevo_nombre = campo_requerido(f"Nuevo nombre [{r['nombre']}]: ") or r["nombre"]
-            nueva_desc = input(f"Nueva descripción [{r.get('descripcion', '')}]: ").strip()
-            r["nombre"] = nuevo_nombre
-            r["descripcion"] = nueva_desc or r.get("descripcion", "")
-            guardar_registros(registros)
-            print("Registro actualizado.")
+    for c in contactos:
+        if c["id"] == cid:
+            print("  (Deja en blanco para conservar el valor actual)")
+            nombre = input(f"Nombre [{c['nombre']}]: ").strip() or c["nombre"]
+
+            # Email: solo cambia si ingresa uno distinto
+            nuevo_email = input(f"Email [{c['email']}]: ").strip().lower()
+            if nuevo_email and nuevo_email != c["email"]:
+                from validate import es_email_valido
+                if not es_email_valido(nuevo_email):
+                    print("  ⚠ Email inválido, se conserva el anterior.")
+                    nuevo_email = c["email"]
+                elif nuevo_email in emails_registrados:
+                    print("  ⚠ Email duplicado, se conserva el anterior.")
+                    nuevo_email = c["email"]
+                else:
+                    emails_registrados.discard(c["email"])
+                    emails_registrados.add(nuevo_email)
+            else:
+                nuevo_email = c["email"]
+
+            telefono    = input(f"Teléfono [{c['telefono']}]: ").strip() or c["telefono"]
+            descripcion = input(f"Descripción [{c.get('descripcion','')}]: ").strip() or c.get("descripcion","")
+
+            c.update({"nombre": nombre, "email": nuevo_email,
+                      "telefono": telefono, "descripcion": descripcion})
+            print("  ✔ Contacto actualizado.")
             return
 
-    print(f"No se encontró ningún registro con ID {registro_id}.")
+    print(f"  ⚠ No se encontró ningún contacto con ID {cid}.")
 
 
-# ── Eliminar ─────────────────────────────────────────────────────────────────
+# ── Eliminar ──────────────────────────────────────────────────────────────────
 
 def eliminar():
-    registros = cargar_registros()
+    listar()
     try:
-        registro_id = int(input("ID del registro a eliminar: "))
+        cid = int(input("\nID del contacto a eliminar: "))
     except ValueError:
-        print("ID inválido.")
+        print("  ⚠ ID inválido.")
         return
 
-    nuevos = [r for r in registros if r["id"] != registro_id]
-    if len(nuevos) == len(registros):
-        print(f"No se encontró ningún registro con ID {registro_id}.")
-        return
+    for c in contactos:
+        if c["id"] == cid:
+            contactos.remove(c)
+            ids_registrados.discard(cid)
+            emails_registrados.discard(c["email"])
+            print(f"  ✔ Contacto #{cid} eliminado.")
+            return
 
-    guardar_registros(nuevos)
-    print(f"Registro #{registro_id} eliminado.")
+    print(f"  ⚠ No se encontró ningún contacto con ID {cid}.")
