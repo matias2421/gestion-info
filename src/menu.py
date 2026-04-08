@@ -3,30 +3,42 @@ menu.py – Interfaz de consola (UI).
 Presenta opciones al usuario y delega acciones al servicio.
 """
 
+import service
 from service import crear, listar, actualizar, eliminar
+from integration import cargar_registros_falsos, exportar_csv, cargar_usuarios_api
 
 
 def mostrar_menu():
-    opciones = {
-        "1": ("Crear registro",    crear),
-        "2": ("Listar registros",  listar),
-        "3": ("Actualizar registro", actualizar),
-        "4": ("Eliminar registro", eliminar),
-        "5": ("Salir",             None),
-    }
-
     while True:
         print("\n=== Menú principal ===")
-        for clave, (descripcion, _) in opciones.items():
-            print(f"  {clave}. {descripcion}")
+        print("  1. Crear registro")
+        print("  2. Listar registros")
+        print("  3. Actualizar registro")
+        print("  4. Eliminar registro")
+        print("  ── Módulo 3: Integraciones ──")
+        print("  6. Generar contactos falsos (Faker)")
+        print("  7. Exportar contactos a CSV (Pandas)")
+        print("  8. Importar usuarios desde API (Requests)")
+        print("  5. Salir")
 
         seleccion = input("Elige una opción: ").strip()
 
-        if seleccion == "5":
+        if seleccion == "1":
+            crear()
+        elif seleccion == "2":
+            listar()
+        elif seleccion == "3":
+            actualizar()
+        elif seleccion == "4":
+            eliminar()
+        elif seleccion == "6":
+            cargar_registros_falsos(service)
+        elif seleccion == "7":
+            exportar_csv(service.contactos)
+        elif seleccion == "8":
+            cargar_usuarios_api(service)
+        elif seleccion == "5":
             print("¡Hasta luego!")
             break
-        elif seleccion in opciones:
-            _, accion = opciones[seleccion]
-            accion()
         else:
             print("Opción no válida. Intenta de nuevo.")
