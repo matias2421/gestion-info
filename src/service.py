@@ -130,3 +130,56 @@ def eliminar():
             return
 
     print(f"  ⚠ No se encontró ningún contacto con ID {cid}.")
+
+# ── Buscar ────────────────────────────────────────────────────────────────────
+
+def buscar() -> None:
+    """Busca contactos por nombre o email usando list comprehension."""
+    termino = input("\nBuscar (nombre o email): ").strip().lower()
+    if not termino:
+        print("  ⚠ Ingresa un término de búsqueda.")
+        return
+
+    # List comprehension para filtrar
+    resultados = [
+        c for c in contactos
+        if termino in c["nombre"].lower() or termino in c["email"].lower()
+    ]
+
+    if not resultados:
+        print(f"  ⚠ No se encontraron contactos con '{termino}'.")
+        return
+
+    print(f"\n  {len(resultados)} resultado(s) encontrado(s):")
+    print(f"\n{'ID':<5} {'Nombre':<20} {'Email':<25} {'Teléfono':<15} {'Descripción'}")
+    print("─" * 80)
+    for c in resultados:
+        print(f"{c['id']:<5} {c['nombre']:<20} {c['email']:<25} {c['telefono']:<15} {c.get('descripcion','')}")
+
+
+# ── Ordenar ───────────────────────────────────────────────────────────────────
+
+def listar_ordenado() -> None:
+    """Lista contactos ordenados por un campo usando lambda."""
+    if not contactos:
+        print("\n  (No hay contactos registrados)")
+        return
+
+    criterios = {"1": "nombre", "2": "email", "3": "id"}
+
+    print("\n  Ordenar por:")
+    print("    1. Nombre")
+    print("    2. Email")
+    print("    3. ID")
+
+    opcion = input("  Elige criterio [1]: ").strip() or "1"
+    campo  = criterios.get(opcion, "nombre")
+
+    # Lambda para ordenar por el campo elegido
+    ordenados = sorted(contactos, key=lambda c: str(c.get(campo, "")).lower())
+
+    print(f"\n  Ordenado por '{campo}':")
+    print(f"\n{'ID':<5} {'Nombre':<20} {'Email':<25} {'Teléfono':<15} {'Descripción'}")
+    print("─" * 80)
+    for c in ordenados:
+        print(f"{c['id']:<5} {c['nombre']:<20} {c['email']:<25} {c['telefono']:<15} {c.get('descripcion','')}")
