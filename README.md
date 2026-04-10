@@ -56,3 +56,19 @@ gestion-info/
 ## Tag de versión
 
 `m0-setup` — configuración inicial del proyecto.
+
+## Pruebas
+
+```bash
+# Instala pytest si no lo tienes
+pip install pytest
+
+# Ejecuta todas las pruebas desde la raíz del proyecto
+pytest tests/ -v
+```
+
+Deberías ver algo como:
+
+```
+26 passed in 2.46s
+```
